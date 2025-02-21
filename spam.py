@@ -20,7 +20,7 @@ API_ID = 20061115  # Replace with your API ID
 API_HASH = "c30d56d90d59b3efc7954013c580e076"
 
 # Session files for 5 accounts (store them in the same directory)
-SESSIONS = ["session_1.session", "session_2.session", "session_3.session", "session_4.session", "session_5.session", "session_6.session"]
+SESSIONS = ["session_1.session", "session_2.session", "session_3.session", "session_4.session", "session_5.session", "session_6.session", "session_7.session", "session_8.session"]
 
 # Target group and bot interactions
 TARGET_GROUP = -1002268194521 # Change as needed
