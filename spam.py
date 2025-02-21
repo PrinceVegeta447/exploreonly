@@ -20,7 +20,7 @@ API_ID = 20061115  # Replace with your API ID
 API_HASH = "c30d56d90d59b3efc7954013c580e076"
 
 # Session files for 5 accounts (store them in the same directory)
-SESSIONS = ["session_1.session", "session_2.session", "session_3.session", "session_4.session", "session_5.session"]
+SESSIONS = ["session_1.session", "session_2.session", "session_3.session", "session_4.session", "session_5.session", "session_6.session", "session_7.session", "session_8.session"]
 
 # Target group and bot interactions
 TARGET_GROUP = -1002395952299  # Change as needed
@@ -107,8 +107,8 @@ async def start_clients():
     for session_name, client in clients.items():
         await client.start()
         client.add_event_handler(handle_buttons, events.NewMessage(chats=EXPLORE_GROUP))
-        client.add_event_handler(lambda event, c=client, s=session_name: start_spam(event, c, s), events.NewMessage(pattern="/startspam"))
-        client.add_event_handler(lambda event, s=session_name: stop_spam(event, s), events.NewMessage(pattern="/stopspam"))
+        client.add_event_handler(lambda event, c=client, s=session_name: start_spam(event, c, s), events.NewMessage(pattern="!startspam"))
+        client.add_event_handler(lambda event, s=session_name: stop_spam(event, s), events.NewMessage(pattern="!stopspam"))
         tasks.append(asyncio.create_task(send_explore(client, session_name)))
     
     logging.info("All bots started successfully.")
