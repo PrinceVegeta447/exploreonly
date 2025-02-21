@@ -60,7 +60,12 @@ async def start_clients():
 
 # Run everything
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     loop.create_task(start_clients())
-    app.run(host="0.0.0.0", port=8000)  # Flask for Koyeb TCP check
+    
+    # Run Flask in a separate thread to avoid blocking the event loop
+    from threading import Thread
+    Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 8000}).start()
+
     loop.run_forever()
