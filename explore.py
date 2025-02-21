@@ -35,8 +35,9 @@ clients = {}
 
 async def send_explore(client, session_name):
     """Sends /explore command to bots at regular intervals."""
+    logging.info(f"{session_name}: send_explore() started!")  # NEW LOG ADDED
     while True:
-        logging.info(f"{session_name}: Checking if we can send /explore...")
+        logging.info(f"{session_name}: Checking if we can send /explore...")  # Debug
         for bot in BOTS:
             try:
                 await client.send_message(EXPLORE_GROUP, f"/explore {bot}")
@@ -46,7 +47,7 @@ async def send_explore(client, session_name):
         delay = random.randint(MIN_EXPLORE_DELAY, MAX_EXPLORE_DELAY)
         logging.info(f"{session_name}: Waiting {delay} sec before next /explore...")
         await asyncio.sleep(delay)
-
+        
 async def handle_buttons(event):
     """Clicks random inline buttons when bots send messages with buttons."""
     if event.reply_markup and hasattr(event.reply_markup, 'rows'):
@@ -66,10 +67,9 @@ async def start_client(session_name):
     await client.start()
     
     client.add_event_handler(handle_buttons, events.NewMessage(chats=EXPLORE_GROUP))
-    asyncio.create_task(send_explore(client, session_name))  # Start explore loop
-
-    clients[session_name] = client
     logging.info(f"{session_name} started successfully.")
+
+    asyncio.create_task(send_explore(client, session_name))  # Moved here!
     await client.run_until_disconnected()
 
 async def start_clients():
