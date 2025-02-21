@@ -67,9 +67,15 @@ async def start_client(session_name):
     
     logging.info(f"{session_name}: Starting client...")  
     await client.start()
-    me = await client.get_me()
-    logging.info(f"{session_name}: Logged in as {me.username or me.id}")  # ✅ Debug authentication
     
+    # ✅ Confirm bot is logged in before proceeding
+    me = await client.get_me()
+    if not me:
+        logging.error(f"{session_name}: Login failed! Check session file.")
+        return  # Exit if login fails
+    
+    logging.info(f"{session_name}: Logged in as {me.username or me.id}")  
+
     client.add_event_handler(handle_buttons, events.NewMessage(chats=EXPLORE_GROUP))
 
     asyncio.create_task(send_explore(client, session_name))  # ✅ Ensure explore function runs
