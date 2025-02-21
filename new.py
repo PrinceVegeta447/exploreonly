@@ -14,7 +14,9 @@ app = Flask(__name__)
 # Telegram account details (Replace with actual API credentials)
 ACCOUNTS = [
     {"session": "session1", "api_id": 29848170, "api_hash": "e2b1cafae7b2492c625e19db5ec7f513"},
-    {"session": "session2", "api_id": 29848170, "api_hash": "e2b1cafae7b2492c625e19db5ec7f513"}
+    {"session": "session2", "api_id": 29848170, "api_hash": "e2b1cafae7b2492c625e19db5ec7f513"},
+    {"session": "session3", "api_id": 29848170, "api_hash": "e2b1cafae7b2492c625e19db5ec7f513"},
+    {"session": "session4", "api_id": 29848170, "api_hash": "e2b1cafae7b2492c625e19db5ec7f513"}
 ]
 
 # Group ID where the script will run
