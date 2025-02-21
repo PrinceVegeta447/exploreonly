@@ -57,21 +57,28 @@ async def handle_buttons(event):
                 logging.info(f"Clicked a button in response to {event.sender_id}")
             except Exception as e:
                 logging.error(f"Failed to click a button: {e}")
-
+                
 async def run_client(session_file):
     """ Starts a client with a specific session file """
     session_name = os.path.splitext(session_file)[0]
     client = TelegramClient(session_name, API_ID, API_HASH)
-    await client.start()
+    
+    try:
+        await client.start()
+    except Exception as e:
+        logging.error(f"Failed to start session {session_name}: {e}")
+        return  # Skip this session if it fails
 
     # Register event handler
     client.add_event_handler(handle_buttons, events.NewMessage(chats=GROUP_ID))
 
-    # Start explore command loop in the background
-    asyncio.create_task(send_explore(client))
-
     logging.info(f"Bot {session_name} is running...")
-    await client.run_until_disconnected()
+
+    # Run send_explore in parallel
+    await asyncio.gather(
+        send_explore(client),  # Ensure this runs continuously
+        client.run_until_disconnected()
+            )
 
 async def main():
     """ Main function to initialize multiple clients """
