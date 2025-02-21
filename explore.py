@@ -64,13 +64,17 @@ async def handle_buttons(event):
 async def start_client(session_name):
     """Starts a single client."""
     client = TelegramClient(session_name, API_ID, API_HASH)
+    
+    logging.info(f"{session_name}: Starting client...")  
     await client.start()
+    me = await client.get_me()
+    logging.info(f"{session_name}: Logged in as {me.username or me.id}")  # ✅ Debug authentication
     
     client.add_event_handler(handle_buttons, events.NewMessage(chats=EXPLORE_GROUP))
-    logging.info(f"{session_name} started successfully.")
 
-    asyncio.create_task(send_explore(client, session_name))  # Moved here!
+    asyncio.create_task(send_explore(client, session_name))  # ✅ Ensure explore function runs
     await client.run_until_disconnected()
+
 
 async def start_clients():
     """Starts all clients asynchronously."""
