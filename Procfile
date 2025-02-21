@@ -1,1 +1,1 @@
-web: python3 spam.py
+web: python3 new.py
