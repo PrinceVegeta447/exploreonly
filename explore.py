@@ -22,6 +22,7 @@ API_HASH = "c30d56d90d59b3efc7954013c580e076"
 # Session files for multiple accounts
 SESSIONS = ["session_1.session", "session_2.session", "session_3.session", "session_4.session", "session_5.session", "session_6.session", "session_7.session", "session_8.session"]
 
+
 # Group where explore commands are sent
 EXPLORE_GROUP = -1002348881334
 BOTS = ["@CollectCricketersBot", "@CollectYourPlayerxBot"]
@@ -30,20 +31,21 @@ BOTS = ["@CollectCricketersBot", "@CollectYourPlayerxBot"]
 MIN_EXPLORE_DELAY, MAX_EXPLORE_DELAY = 310, 330  
 
 # Create clients for multiple sessions
-clients = {session: TelegramClient(session, API_ID, API_HASH) for session in SESSIONS}
+clients = {}
 
 async def send_explore(client, session_name):
     """Sends /explore command to bots at regular intervals."""
     while True:
+        logging.info(f"{session_name}: Checking if we can send /explore...")
         for bot in BOTS:
             try:
                 await client.send_message(EXPLORE_GROUP, f"/explore {bot}")
                 logging.info(f"{session_name}: Sent /explore to {bot}")
             except Exception as e:
                 logging.error(f"{session_name}: Failed to send /explore - {e}")
-            delay = random.randint(MIN_EXPLORE_DELAY, MAX_EXPLORE_DELAY)
-            logging.info(f"{session_name}: Waiting {delay} sec before next /explore...")
-            await asyncio.sleep(delay)
+        delay = random.randint(MIN_EXPLORE_DELAY, MAX_EXPLORE_DELAY)
+        logging.info(f"{session_name}: Waiting {delay} sec before next /explore...")
+        await asyncio.sleep(delay)
 
 async def handle_buttons(event):
     """Clicks random inline buttons when bots send messages with buttons."""
@@ -58,15 +60,21 @@ async def handle_buttons(event):
             except Exception as e:
                 logging.error(f"Failed to click button: {e}")
 
-async def start_clients():
-    """Starts all clients and registers event handlers."""
-    tasks = []
-    for session_name, client in clients.items():
-        await client.start()
-        client.add_event_handler(handle_buttons, events.NewMessage(chats=EXPLORE_GROUP))
-        tasks.append(asyncio.create_task(send_explore(client, session_name)))
+async def start_client(session_name):
+    """Starts a single client."""
+    client = TelegramClient(session_name, API_ID, API_HASH)
+    await client.start()
     
-    logging.info("All bots started successfully.")
+    client.add_event_handler(handle_buttons, events.NewMessage(chats=EXPLORE_GROUP))
+    asyncio.create_task(send_explore(client, session_name))  # Start explore loop
+
+    clients[session_name] = client
+    logging.info(f"{session_name} started successfully.")
+    await client.run_until_disconnected()
+
+async def start_clients():
+    """Starts all clients asynchronously."""
+    tasks = [start_client(session) for session in SESSIONS]
     await asyncio.gather(*tasks)
 
 async def main():
