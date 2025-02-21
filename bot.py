@@ -41,7 +41,7 @@ async def explore(client):
             await asyncio.sleep(wait_time)
 
         except rpcerrorlist.FloodWaitError as e:
-    print(f"Rate limit hit! Sleeping for {e.seconds} seconds.")
+            print(f"Rate limit hit! Sleeping for {e.seconds} seconds.")
             await asyncio.sleep(e.seconds)
         except Exception as e:
             print(f"Error: {e}")
