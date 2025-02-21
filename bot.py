@@ -3,7 +3,7 @@ import random
 import asyncio
 from flask import Flask
 from telethon import TelegramClient, events
-from telethon.errors import FloodWait
+from telethon.errors import rpcerrorlist
 
 # Flask app for Koyeb health check
 app = Flask(__name__)
@@ -40,8 +40,8 @@ async def explore(client):
             wait_time = random.randint(310, 320)
             await asyncio.sleep(wait_time)
 
-        except FloodWait as e:
-            print(f"Rate limit hit! Sleeping for {e.seconds} seconds.")
+        except rpcerrorlist.FloodWaitError as e:
+    print(f"Rate limit hit! Sleeping for {e.seconds} seconds.")
             await asyncio.sleep(e.seconds)
         except Exception as e:
             print(f"Error: {e}")
