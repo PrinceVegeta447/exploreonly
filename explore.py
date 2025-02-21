@@ -1,101 +1,85 @@
+import os
 import asyncio
 import random
 import logging
-import os
-import glob
-import threading
-from flask import Flask
+from flask import Flask, jsonify
 from telethon import TelegramClient, events
 
-# Configure logging
-logging.basicConfig(format="[%(asctime)s] %(levelname)s: %(message)s", level=logging.INFO)
-
-# API credentials (should be the same for all sessions)
-API_ID = 29848170  # Replace with your API ID
-API_HASH = "e2b1cafae7b2492c625e19db5ec7f513"
-
-# Group ID where the script will run
-GROUP_ID = -1002348881334
-
-# Bots to send /explore
-BOTS = ["@CollectCricketersBot", "@CollectYourPlayerxBot"]
-
-# Flask app for TCP health check
+# Flask app for health checks
 app = Flask(__name__)
 
-@app.route("/healthz")
+@app.route("/health", methods=["GET"])
 def health_check():
-    return "OK", 200
+    return jsonify({"status": "running"}), 200
 
-async def send_explore(client):
-    """ Sends /explore to both bots in the group with a randomized delay """
+# Logging setup
+logging.basicConfig(format="[%(asctime)s] %(levelname)s: %(message)s", level=logging.INFO)
+
+# Telegram API credentials
+API_ID = 20061115  # Replace with your API ID
+API_HASH = "c30d56d90d59b3efc7954013c580e076"
+
+# Session files for multiple accounts
+SESSIONS = ["session_1.session", "session_2.session", "session_3.session", "session_4.session", "session_5.session", "session_6.session", "session_7.session", "session_8.session"]
+
+# Group where explore commands are sent
+EXPLORE_GROUP = -1002348881334
+BOTS = ["@CollectCricketersBot", "@CollectYourPlayerxBot"]
+
+# Explore delay range
+MIN_EXPLORE_DELAY, MAX_EXPLORE_DELAY = 310, 330  
+
+# Create clients for multiple sessions
+clients = {session: TelegramClient(session, API_ID, API_HASH) for session in SESSIONS}
+
+async def send_explore(client, session_name):
+    """Sends /explore command to bots at regular intervals."""
     while True:
         for bot in BOTS:
             try:
-                await client.send_message(GROUP_ID, f"/explore {bot}")
-                logging.info(f"Sent /explore to {bot}")
+                await client.send_message(EXPLORE_GROUP, f"/explore {bot}")
+                logging.info(f"{session_name}: Sent /explore to {bot}")
             except Exception as e:
-                logging.error(f"Failed to send /explore to {bot}: {e}")
-            delay = random.randint(310, 330)  # Randomized delay (310s - 330s)
-            logging.info(f"Waiting {delay} seconds before next /explore...")
+                logging.error(f"{session_name}: Failed to send /explore - {e}")
+            delay = random.randint(MIN_EXPLORE_DELAY, MAX_EXPLORE_DELAY)
+            logging.info(f"{session_name}: Waiting {delay} sec before next /explore...")
             await asyncio.sleep(delay)
 
 async def handle_buttons(event):
-    """ Clicks random inline buttons when bots send a message with buttons """
+    """Clicks random inline buttons when bots send messages with buttons."""
     if event.reply_markup and hasattr(event.reply_markup, 'rows'):
-        buttons = []
-        for row in event.reply_markup.rows:
-            for btn in row.buttons:
-                if hasattr(btn, "data"):  # Ensure it's an inline button
-                    buttons.append(btn)
-
+        buttons = [btn for row in event.reply_markup.rows for btn in row.buttons if hasattr(btn, "data")]
         if buttons:
-            button = random.choice(buttons)  # Select a random button
-            await asyncio.sleep(random.randint(3, 6))  # Random delay before clicking
+            button = random.choice(buttons)
+            await asyncio.sleep(random.randint(3, 6))
             try:
-                await event.click(buttons.index(button))  # Click the button
+                await event.click(buttons.index(button))
                 logging.info(f"Clicked a button in response to {event.sender_id}")
             except Exception as e:
-                logging.error(f"Failed to click a button: {e}")
-                
-async def run_client(session_file):
-    """ Starts a client with a specific session file """
-    session_name = os.path.splitext(session_file)[0]
-    client = TelegramClient(session_name, API_ID, API_HASH)
-    
-    try:
+                logging.error(f"Failed to click button: {e}")
+
+async def start_clients():
+    """Starts all clients and registers event handlers."""
+    tasks = []
+    for session_name, client in clients.items():
         await client.start()
-    except Exception as e:
-        logging.error(f"Failed to start session {session_name}: {e}")
-        return  # Skip this session if it fails
-
-    # Register event handler
-    client.add_event_handler(handle_buttons, events.NewMessage(chats=GROUP_ID))
-
-    logging.info(f"Bot {session_name} is running...")
-
-    # Run send_explore in parallel
-    await asyncio.gather(
-        send_explore(client),  # Ensure this runs continuously
-        client.run_until_disconnected()
-            )
+        client.add_event_handler(handle_buttons, events.NewMessage(chats=EXPLORE_GROUP))
+        tasks.append(asyncio.create_task(send_explore(client, session_name)))
+    
+    logging.info("All bots started successfully.")
+    await asyncio.gather(*tasks)
 
 async def main():
-    """ Main function to initialize multiple clients """
-    session_files = glob.glob("*.session")  # Get all .session files
-    if not session_files:
-        logging.error("No session files found!")
-        return
+    """Main entry point for running bots."""
+    await start_clients()
+    logging.info("Bots are running...")
+    await asyncio.Future()  # Keep running indefinitely
 
-    tasks = [run_client(session) for session in session_files]
-    await asyncio.gather(*tasks)  # Run all sessions concurrently
+# Start the Flask health check in the background
+def run_flask():
+    app.run(host="0.0.0.0", port=8000)
 
-def start_flask():
-    """ Runs Flask for health checks """
-    app.run(host="0.0.0.0", port=5000)
-
-# Run Flask in a separate thread
-threading.Thread(target=start_flask, daemon=True).start()
-
-# Run Telegram clients
-asyncio.run(main())
+if __name__ == "__main__":
+    import threading
+    threading.Thread(target=run_flask, daemon=True).start()
+    asyncio.run(main())
