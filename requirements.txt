@@ -1,3 +1,5 @@
-flask
 telethon
-asyncio
+fastapi
+uvicorn
+python-dotenv
+Flask
